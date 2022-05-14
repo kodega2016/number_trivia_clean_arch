@@ -27,13 +27,20 @@ class NumberTriviaRepositoryImpl implements NumberTriviaRepository {
       try {
         final remoteTrivia =
             await numberTriviaRemoteDataSource.getConcreteNumberTrivia(number);
+        await numberTriviaLocalDataSource.cacheNumberTrivia(remoteTrivia);
         return Right(remoteTrivia);
       } on ServerException {
         return Left(ServerFailure());
       }
+    } else {
+      try {
+        final localTrivia =
+            await numberTriviaLocalDataSource.getLastNumberTrivia();
+        return Right(localTrivia);
+      } on CacheException {
+        return Left(CacheFailure());
+      }
     }
-
-    return Left(ServerFailure());
   }
 
   @override
