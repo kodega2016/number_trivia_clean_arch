@@ -119,5 +119,59 @@ void main() {
       });
     });
   });
-  group('getRandomNumberTrivia', () {});
+  group('getRandomNumberTrivia', () {
+    const tNumberTriviaModel = NumberTriviaModel(text: 'Test text', number: 1);
+    const tNumberTrivia = tNumberTriviaModel;
+
+    test('Should check if device is online or offline', () async {
+      when(networkInfo.isConnected).thenAnswer((_) async => true);
+      await networkInfo.isConnected;
+      verify(networkInfo.isConnected).called(1);
+    });
+
+    runTestOnline(() {
+      test(
+          'should return trivia for random number when the call to remote data is successful ',
+          () async {
+        when(numberTriviaRemoteDataSource.getRandomNumberTrivia())
+            .thenAnswer((_) async => tNumberTriviaModel);
+
+        final result = await numberTriviaRepositoryImpl.getRandomNumberTrivia();
+        verify(numberTriviaRemoteDataSource.getRandomNumberTrivia()).called(1);
+        expect(result, equals(const Right(tNumberTrivia)));
+      });
+
+      test(
+          'should return cache failuer when when the call to remote data is unsuccessful ',
+          () async {
+        when(numberTriviaRemoteDataSource.getRandomNumberTrivia())
+            .thenThrow(ServerException());
+
+        final result = await numberTriviaRepositoryImpl.getRandomNumberTrivia();
+        verify(numberTriviaRemoteDataSource.getRandomNumberTrivia()).called(1);
+        expect(result, equals(Left(ServerFailure())));
+      });
+    });
+
+    runTestOffline(() {
+      test('should return last saved cache trivia from local storage',
+          () async {
+        when(numberTriviaLocalDataSource.getLastNumberTrivia())
+            .thenAnswer((_) async => tNumberTriviaModel);
+
+        final result = await numberTriviaRepositoryImpl.getRandomNumberTrivia();
+        verify(numberTriviaLocalDataSource.getLastNumberTrivia()).called(1);
+        expect(result, equals(const Right(tNumberTrivia)));
+      });
+      test('should return cache failure when there is no cache data', () async {
+        when(numberTriviaLocalDataSource.getLastNumberTrivia())
+            .thenThrow(CacheException());
+
+        final result = await numberTriviaRepositoryImpl.getRandomNumberTrivia();
+        verify(numberTriviaLocalDataSource.getLastNumberTrivia()).called(1);
+        expect(result, equals(Left(CacheFailure())));
+        verifyZeroInteractions(numberTriviaRemoteDataSource);
+      });
+    });
+  });
 }
