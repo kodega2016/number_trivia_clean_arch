@@ -36,13 +36,13 @@ class NumberTriviaBloc extends Bloc<NumberTriviaEvent, NumberTriviaState> {
     final inputEither =
         inputConverter.stringToUnsignedInteger(event.numberString);
 
-    inputEither.fold(
-      (l) => emit(Error(message: INVALID_INPUT_FAILURE_MESSAGE)),
+    return inputEither.fold(
+      (l) async => emit(Error(message: INVALID_INPUT_FAILURE_MESSAGE)),
       (number) async {
         final failureOrTrivia =
             await getConcreteNumberTrivia(Params(number: number));
 
-        failureOrTrivia.fold(
+        return failureOrTrivia.fold(
           (failure) => emit(
             Error(
               message: failure is ServerFailure
@@ -62,7 +62,7 @@ class NumberTriviaBloc extends Bloc<NumberTriviaEvent, NumberTriviaState> {
 
     final failureOrTrivia = await getRandomNumberTrivia(NoParams());
 
-    failureOrTrivia.fold(
+    return failureOrTrivia.fold(
       (failure) => emit(
         Error(
           message: failure is ServerFailure
