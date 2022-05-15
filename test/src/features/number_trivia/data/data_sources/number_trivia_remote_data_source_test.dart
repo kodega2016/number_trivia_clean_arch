@@ -52,7 +52,6 @@ void main() {
   });
   group('getRandomNumberTrivia', () {
     final jsonData = fixture('trivia.json');
-    const tNumber = 1;
 
     test(
       'should preform a GET request on a URL with number being the endpoint and with application/json header',

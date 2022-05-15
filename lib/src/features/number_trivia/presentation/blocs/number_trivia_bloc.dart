@@ -3,6 +3,7 @@
 import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:number_trivia/src/core/error/failures.dart';
 import 'package:number_trivia/src/core/usecases/usecase.dart';
 import 'package:number_trivia/src/core/utils/input_converter.dart';
 import 'package:number_trivia/src/features/number_trivia/domain/usecases/get_concrete_number_trivia.dart';
@@ -42,7 +43,13 @@ class NumberTriviaBloc extends Bloc<NumberTriviaEvent, NumberTriviaState> {
             await getConcreteNumberTrivia(Params(number: number));
 
         failureOrTrivia.fold(
-          (failure) => emit(Error(message: SERVER_FAILURE_MESSAGE)),
+          (failure) => emit(
+            Error(
+              message: failure is ServerFailure
+                  ? SERVER_FAILURE_MESSAGE
+                  : CACHE_FAILURE_MESSAGE,
+            ),
+          ),
           (trivia) => emit(Loaded(text: trivia.text)),
         );
       },
@@ -50,5 +57,20 @@ class NumberTriviaBloc extends Bloc<NumberTriviaEvent, NumberTriviaState> {
   }
 
   Future<void> _onGetTriviaForRandomNumber(
-      GetTriviaForRandomNumber event, Emitter<NumberTriviaState> emit) async {}
+      GetTriviaForRandomNumber event, Emitter<NumberTriviaState> emit) async {
+    emit(Loading());
+
+    final failureOrTrivia = await getRandomNumberTrivia(NoParams());
+
+    failureOrTrivia.fold(
+      (failure) => emit(
+        Error(
+          message: failure is ServerFailure
+              ? SERVER_FAILURE_MESSAGE
+              : CACHE_FAILURE_MESSAGE,
+        ),
+      ),
+      (trivia) => emit(Loaded(text: trivia.text)),
+    );
+  }
 }

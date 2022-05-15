@@ -109,6 +109,87 @@ void main() {
         Error(message: SERVER_FAILURE_MESSAGE),
       ],
     );
+
+    blocTest<NumberTriviaBloc, NumberTriviaState>(
+      'should emits [Loading,Error] when data is gotten failed',
+      build: () {
+        when(inputConverter.stringToUnsignedInteger(tNumberString))
+            .thenReturn(const Right(tNumberParsed));
+
+        when(getConcreteNumberTrivia(const Params(number: tNumberParsed)))
+            .thenAnswer((_) async => Left(CacheFailure()));
+
+        return NumberTriviaBloc(
+          getConcreteNumberTrivia: getConcreteNumberTrivia,
+          getRandomNumberTrivia: getRandomNumberTrivia,
+          inputConverter: inputConverter,
+        );
+      },
+      act: (bloc) => bloc.add(GetTriviaForConcreteNumber(tNumberString)),
+      expect: () => [
+        Loading(),
+        Error(message: CACHE_FAILURE_MESSAGE),
+      ],
+    );
   });
-  group('GetTriviaForRandomNumberTrivia', () {});
+  group('GetTriviaForRandomNumberTrivia', () {
+    const tNumberTrivia = NumberTrivia(number: 1, text: 'test trivia');
+
+    blocTest<NumberTriviaBloc, NumberTriviaState>(
+      'should emits [Loading,Loaded] when data is gotten successfully',
+      build: () {
+        when(getRandomNumberTrivia(any))
+            .thenAnswer((_) async => const Right(tNumberTrivia));
+
+        return NumberTriviaBloc(
+          getConcreteNumberTrivia: getConcreteNumberTrivia,
+          getRandomNumberTrivia: getRandomNumberTrivia,
+          inputConverter: inputConverter,
+        );
+      },
+      act: (bloc) => bloc.add(GetTriviaForRandomNumber()),
+      expect: () => [
+        Loading(),
+        Loaded(text: tNumberTrivia.text),
+      ],
+    );
+
+    blocTest<NumberTriviaBloc, NumberTriviaState>(
+      'should emits [Loading,Error] when data is gotten failed',
+      build: () {
+        when(getRandomNumberTrivia(any))
+            .thenAnswer((_) async => Left(ServerFailure()));
+
+        return NumberTriviaBloc(
+          getConcreteNumberTrivia: getConcreteNumberTrivia,
+          getRandomNumberTrivia: getRandomNumberTrivia,
+          inputConverter: inputConverter,
+        );
+      },
+      act: (bloc) => bloc.add(GetTriviaForRandomNumber()),
+      expect: () => [
+        Loading(),
+        Error(message: SERVER_FAILURE_MESSAGE),
+      ],
+    );
+
+    blocTest<NumberTriviaBloc, NumberTriviaState>(
+      'should emits [Loading,Error] when data is gotten failed',
+      build: () {
+        when(getRandomNumberTrivia(any))
+            .thenAnswer((_) async => Left(CacheFailure()));
+
+        return NumberTriviaBloc(
+          getConcreteNumberTrivia: getConcreteNumberTrivia,
+          getRandomNumberTrivia: getRandomNumberTrivia,
+          inputConverter: inputConverter,
+        );
+      },
+      act: (bloc) => bloc.add(GetTriviaForRandomNumber()),
+      expect: () => [
+        Loading(),
+        Error(message: CACHE_FAILURE_MESSAGE),
+      ],
+    );
+  });
 }
